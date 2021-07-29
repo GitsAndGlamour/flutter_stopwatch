@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'format.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,54 +14,89 @@ class StopwatchApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: StopwatchPage(title: 'Flutter Stopwatch'),
+      home: StopwatchPage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class StopwatchPage extends StatefulWidget {
-  StopwatchPage({Key? key, required this.title}) : super(key: key);
-  final String title;
+  StopwatchPage({Key? key}) : super(key: key);
 
   @override
   _StopwatchPageState createState() => _StopwatchPageState();
 }
 
 class _StopwatchPageState extends State<StopwatchPage> {
-  int _counter = 0;
+  int _duration = 3665000;
+  late Timer _timer;
+  bool isSet = false;
 
-  void _incrementCounter() {
+  void _increment(Timer timer) {
+    if (_timer.isActive) {
+      setState(() {
+        _duration++;
+      });
+    }
+  }
+
+  void _start() {
     setState(() {
-      _counter++;
+      if (!isSet) {
+        _timer = Timer.periodic(Duration(milliseconds: 1), _increment);
+        isSet = true;
+      }
     });
+  }
+
+  void _stop() {
+    _timer.cancel();
   }
 
   @override
   Widget build(BuildContext context) {
+    final ButtonStyle buttonStyle =
+    ElevatedButton.styleFrom(
+        minimumSize: Size(100, 40),
+        textStyle: const TextStyle(fontSize: 18)
+    );
+
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text('Flutter Stopwatch'),
       ),
-      body: Center(
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+            Text(elapsedTime(_duration),
+              style: TextStyle(
+                fontSize: 40,
+              )),
+            Container(
+              padding:  EdgeInsets.all(40),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    style: buttonStyle,
+                    onPressed: _stop,
+                    child: Text('Stop')),
+                  ElevatedButton(
+                    style: buttonStyle,
+                    onPressed: _start,
+                    child: Text('Start')),
+                ],
+              )
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            Container(
+              margin: EdgeInsets.fromLTRB(0, 40, 0, 20),
+              child: Text("Made by Omie Walls :)"),
+            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
