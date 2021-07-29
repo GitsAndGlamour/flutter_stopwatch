@@ -24,5 +24,5 @@ String seconds(int duration) {
 }
 
 String elapsedTime(duration) {
-  return hours(duration) + ':' + minutes(duration) + ':' + seconds(duration);
+  return '${hours(duration)}:${minutes(duration)}:${seconds(duration)}';
 }

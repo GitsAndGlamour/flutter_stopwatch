@@ -1,6 +1,8 @@
 import 'dart:async';
-import 'format.dart';
+
 import 'package:flutter/material.dart';
+
+import 'format.dart';
 
 void main() {
   runApp(StopwatchApp());
@@ -28,9 +30,10 @@ class StopwatchPage extends StatefulWidget {
 }
 
 class _StopwatchPageState extends State<StopwatchPage> {
-  int _duration = 3665000;
+  int _duration = 0;
   late Timer _timer;
-  bool isSet = false;
+  bool _isSet = false;
+  List<int> _laps = [];
 
   void _increment(Timer timer) {
     if (_timer.isActive) {
@@ -42,25 +45,40 @@ class _StopwatchPageState extends State<StopwatchPage> {
 
   void _start() {
     setState(() {
-      if (!isSet) {
-        _timer = Timer.periodic(Duration(milliseconds: 1), _increment);
-        isSet = true;
+      if (!_isSet) {
+        _timer = Timer.periodic(Duration(milliseconds: 10), _increment);
+        _isSet = true;
       }
     });
   }
 
   void _stop() {
     _timer.cancel();
+    setState(() {
+      _isSet = false;
+    });
+  }
+
+  void _reset() {
+    setState(() {
+      _duration = 0;
+      _laps = [];
+    });
+  }
+
+  void _lap() {
+    int value = _laps.length == 0
+        ? _duration
+        : _duration - _laps.reduce((a, b) => a + b);
+    setState(() {
+      _laps.add(value);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final ButtonStyle buttonStyle =
-    ElevatedButton.styleFrom(
-        minimumSize: Size(100, 40),
-        textStyle: const TextStyle(fontSize: 18)
-    );
-
+    final ButtonStyle buttonStyle = ElevatedButton.styleFrom(
+        minimumSize: Size(100, 40), textStyle: const TextStyle(fontSize: 18));
 
     return Scaffold(
       appBar: AppBar(
@@ -68,34 +86,58 @@ class _StopwatchPageState extends State<StopwatchPage> {
       ),
       body: Padding(
         padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
-        child: Column(
-          children: <Widget>[
-            Text(elapsedTime(_duration),
+        child: Column(children: <Widget>[
+          Text(elapsedTime(_duration),
+              key: Key('duration'),
               style: TextStyle(
                 fontSize: 40,
               )),
-            Container(
-              padding:  EdgeInsets.all(40),
+          Container(
+              padding: EdgeInsets.all(40),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
-                    style: buttonStyle,
-                    onPressed: _stop,
-                    child: Text('Stop')),
+                      key: Key('lap-reset'),
+                      style: buttonStyle,
+                      onPressed: () {
+                        _isSet || (_laps.length == 0 && _duration == 0) ? _lap() : _reset();
+                      },
+                      child:
+                          Text(_isSet || (_laps.length == 0 && _duration == 0) ? 'Lap' : 'Reset')),
                   ElevatedButton(
-                    style: buttonStyle,
-                    onPressed: _start,
-                    child: Text('Start')),
+                      key: Key('start-stop'),
+                      style: buttonStyle,
+                      onPressed: () {
+                        _isSet ? _stop() : _start();
+                      },
+                      child: Text(_isSet ? 'Stop' : 'Start')),
                 ],
-              )
-            ),
-            Container(
-              margin: EdgeInsets.fromLTRB(0, 40, 0, 20),
-              child: Text("Made by Omie Walls :)"),
-            )
-          ],
-        ),
+              )),
+          Expanded(
+              flex: 1,
+              child: SingleChildScrollView(
+                  child: Container(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      child: Column(
+                          children: _laps
+                              .asMap()
+                              .entries
+                              .map((entry) => Card(
+                                    child: ListTile(
+                                      title: Text(
+                                        'Lap # ${(entry.key + 1).toString()}',
+                                        key: Key('lap-${entry.key}'),
+                                      ),
+                                      trailing: Text(elapsedTime(entry.value)),
+                                    ),
+                                  ))
+                              .toList())))),
+          Container(
+            margin: EdgeInsets.fromLTRB(0, 40, 0, 20),
+            child: Text("Made by Omie Walls :)"),
+          )
+        ]),
       ),
     );
   }
